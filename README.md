@@ -1,2 +1,2 @@
 # student_HU-YH
-https://github.com/HU-YH/student_HU-YH/wiki
+https://github.com/bcb420-2020/student_HU-YH/wiki
