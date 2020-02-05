@@ -1,0 +1,144 @@
+---
+title: "Assignment 1"
+author: "Yuhan Hu"
+output:
+  html_document:
+    df_print: paged
+---
+```{r set up, echo = FALSE, message = FALSE,warning=FALSE}
+if (!requireNamespace("edgeR", quietly = TRUE)){
+  BiocManager::install("edgeR")
+}
+library(edgeR)
+
+if (!requireNamespace("GEOmetadb", quietly = TRUE)){
+  BiocManager::install("GEOmetadb")
+}
+library(GEOmetadb)
+
+if (!requireNamespace("ggplot2", quietly = TRUE)){
+  install.packages('ggplot2')
+}
+library(ggplot2)   
+```
+
+# Introduction
+
+```{r,message=FALSE}
+files = getGEOSuppFiles('GSE114260')
+fnames = rownames(files)
+gse <- getGEO("GSE114260",GSEMatrix=FALSE)
+current_gpl <- names(GPLList(gse))[1]
+current_gpl_info <- Meta(getGEO(current_gpl))
+for(i in 1:length(fnames)){
+  print(tail(unlist(strsplit(fnames[i],split='/')), n=1))
+}
+```
+**Platform title:** `r current_gpl_info$title`
+
+**Submission data:** `r current_gpl_info$submission_data`
+
+**Last update data:** `r current_gpl_info$last_update_date`
+
+**Organism:** `r current_gpl_info$organism`
+
+**Number of GEO datasets that use this techology :** `r length(current_gpl_info$series_id)`
+
+**Number of GEO samples that use this technology :** `r length(current_gpl_info$sample_id)`
+
+Refer to corresponding paper, **combined** in file name means this file contains samples from both human and mice, since we only care about human, don't need to use the two **combined** file. Therefore, the **stranded_read_counts** is the data file of interest.
+
+To clarify, **ER** in this data set stands for **estrogen receptor**, not **Endoplasmic reticulum**.In this dataset, we have 2 groups with 3 replicates each, so 6 samples in total. C4-12ERaERE (ER lacking cell line stably transfected with ERaERE) relative to the MCF7 cells were used for RNAseq analysis. The treatment group undergo paroxetine and estrogen (E2) treatment, while in control group there is only paroxetine treatment.
+
+To be honest, I'm more interested in data related to aging or cell senesence, but for unknown reason, all recent available GEO data related to these two key words can not be read by r on my desktop. So I simply choose a dataset that can be successfully read into r on my desktop and fulfill dataset requirement for this assignment. I'm assuming this data-import problem occurs because I'm not using docker, but I simply can't run docker on my computer, no matter if I enable virtuablization on motherboard or use virtualbox.
+
+# data exploration
+```{r, result = 'hide'}
+#read the data file then take a first glance
+data = read.delim(fnames[4], header=TRUE, check.names = FALSE)
+colnames(data)
+```
+
+```{r,eval=FALSE}
+data$symbol
+```
+
+```{r, message = FALSE}
+#the given data file is using HUGO symbols to label gene
+#based on assignment requirement, the HUGO symobols are supposed to be rownames
+rownames(data) <- data$symbol
+colnames(data) <- c('symbol','control.1','control.2','control.3','E2.treat.1','E2.treat.2','E2.treat.3')
+# is there gene symbol that has more than one occurance?
+length(unique(data$symbol)) == nrow(data)
+# no duplicated gene
+# all data entry is unique 
+```
+
+```{r}
+#filter out gene with low counts
+cpms = cpm(data[,2:7])
+rownames(cpms) <- data$symbol
+#from lecture 4, we want to keep those genes with at least 1 read per million in n of the samples
+#where n is the size of the smallest group of replicates
+#in this case, I have 2 groups, each groups with 3 replicates, so n = 3
+
+#but, what if I chose a different value of n?
+keep1 = rowSums(cpms >1) >=1
+keep2 = rowSums(cpms >1) >=2
+keep3 = rowSums(cpms >1) >=3
+keep4 = rowSums(cpms >1) >=4
+keep5 = rowSums(cpms >1) >=5
+keep6 = rowSums(cpms >1) >=6
+
+knitr::kable(data.frame('num_gene_filtered'=c(sum(keep1),sum(keep2),sum(keep3),sum(keep4),sum(keep5),sum(keep6)), 
+                       row.names = c('n=1','n=2','n=3','n=4','n=5','n=6')),format='html')
+#it's clear that there is no significant difference between different choice of n
+#therefore, I'd like to follow the protocal taught in lecture, which means n=3
+data_filtered = data[keep3,]
+cpm_filtered <- cpms[keep3,]
+
+```
+
+```{r}
+knitr::kable(summary(data_filtered[,-1]),format='html')
+knitr::kable(summary(cpm_filtered[,-1]),format='html')
+```
+
+Obviously there is outliers and affect mean in a large scale, i.e, the max value may be greater than sum of other value in one sample ,so prefer RLE, but would like to try TMM first.
+
+```{r}
+limma::plotMA(log2(data_filtered[,c(2,5)]), ylab="M - ratio log expression", main="control1 vs treatment1")
+
+```
+# Normalization
+
+```{r}
+data2plot <- log2(cpm_filtered[,1:6])
+boxplot(data2plot, xlab = "Samples", ylab = "log2 CPM", 
+        las = 2, cex = 0.5, cex.lab = 0.5,
+        cex.axis = 0.5, main = "C4-12ERaERE RNASeq Samples")
+abline(h = median(apply(data2plot, 2, median)), col = "green", lwd = 0.6, lty = "dashed")
+```
+
+```{r}
+filtered_data_matrix <- as.matrix(data_filtered[,2:7])
+rownames(filtered_data_matrix) <- data_filtered$symbol
+
+
+samples <- data.frame(lapply(colnames(data_filtered)[2:7],
+FUN=function(x){unlist(strsplit(x, split = "\\_"))[c(2)]}))
+colnames(samples) <- colnames(data_filtered)[2:7]
+rownames(samples) <- "cell_type"
+samples <- data.frame(t(samples))
+d = DGEList(counts=filtered_data_matrix, group=samples$t.samples.)
+normalized_count <- cpm(d)
+
+boxplot(normalized_count, xlab = "Samples", ylab = "log2 CPM", 
+        las = 2, cex = 0.5, cex.lab = 0.5,
+        cex.axis = 0.5, main = "C4-12ERaERE RNASeq Samples")
+
+plotMeanVar(d, show.raw.vars = TRUE,
+show.tagwise.vars=FALSE, NBline=FALSE,
+show.ave.raw.vars = FALSE,show.binned.common.disp.vars = FALSE)
+```
+significant improvement after normalization by TMM
