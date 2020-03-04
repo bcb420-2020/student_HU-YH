@@ -8,7 +8,7 @@ bibliography: A2citation.bib
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval = FALSE)
+knitr::opts_chunk$set(eval = TRUE)
 ```
 
 ```{r,echo = FALSE,message=FALSE, warning=FALSE}
@@ -32,6 +32,10 @@ if (!requireNamespace("edgeR", quietly = TRUE)){
 
 library(edgeR)
 
+if (!requireNamespace("limma", quietly = TRUE)){
+  BiocManager::install("limma")
+}
+
 if (!requireNamespace("knitr", quietly = TRUE)){
   BiocManager::install("knitr")
 }
@@ -39,19 +43,7 @@ if (!requireNamespace("knitr", quietly = TRUE)){
 
 # Introduction
 
-**Platform title:** `r current_gpl_info$title`
-
-**Submission data:** `r current_gpl_info$submission_data`
-
-**Last update data:** `r current_gpl_info$last_update_date`
-
-**Organism:** `r current_gpl_info$organism`
-
-**Number of GEO datasets that use this techology :** `r length(current_gpl_info$series_id)`
-
-**Number of GEO samples that use this technology :** `r length(current_gpl_info$sample_id)`
-
-Refer to corresponding paper, **combined** in file name means this file contains samples from both human and mice, since we only care about human, don't need to use the two **combined** file. Therefore, the **stranded_read_counts** is the data file of interest.
+GEO data used is GSE114260.Refer to corresponding paper, **combined** in file name means this file contains samples from both human and mice, since we only care about human, don't need to use the two **combined** file. Therefore, the **stranded_read_counts** is the data file of interest.
 
 To clarify, **ER** in this data set stands for **estrogen receptor**, not **Endoplasmic reticulum**.In this dataset, we have 2 groups with 3 replicates each, so 6 samples in total. C4-12ERaERE (ER lacking cell line stably transfected with ERaERE) relative to the MCF7 cells were used for RNAseq analysis. The treatment group undergo paroxetine and estrogen (E2) treatment, while in control group there is only paroxetine treatment.
 
