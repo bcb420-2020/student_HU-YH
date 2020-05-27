@@ -1,0 +1,23 @@
+producer_class	xtools.gsea.GseaPreranked
+producer_timestamp	1590521512636
+param	rpt_label	my_analysis
+param	rnd_seed	timestamp
+param	set_min	15
+param	zip_report	false
+param	create_svgs	false
+param	scoring_scheme	weighted
+param	rnk	E:\OneDrive\Document\UofT\LastYear\Winter\BCB420\submission\rank.rnk
+param	norm	meandiv
+param	out	C:\Users\huyuhan\gsea_home\output\may26
+param	mode	Max_probe
+param	include_only_symbols	true
+param	help	false
+param	set_max	200
+param	gmx	C:\Users\huyuhan\Documents\Kitematic\confident_thompson\home\bioc\rstudio\projects\Human_GOBP_AllPathways_no_GO_iea_April_01_2020_symbol.gmt
+param	make_sets	true
+param	plot_top_x	20
+param	gui	false
+param	nperm	1000
+param	collapse	No_Collapse
+
+file	C:\Users\huyuhan\gsea_home\output\may26\my_analysis.GseaPreranked.1590521512636\index.html

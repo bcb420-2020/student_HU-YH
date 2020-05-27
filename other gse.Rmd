@@ -1,0 +1,32 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+sfiles = getGEOSuppFiles('GSE100068')
+fnames = rownames(sfiles)
+# there is only one supplemental file
+ca125_exp = read.delim('G:/BCB420Project/GSE109720/GSE109720_COUNTS_genes_LUNGCANCER_10.txt.gz', header=TRUE, check.names = FALSE)
+
+sfiles = getGEOSuppFiles('GSE110536')
+fnames = rownames(sfiles)
+# there is only one supplemental file
+A = read.delim('G:/BCB420Project/GSE70072/GSE70072_HumanSerousCancer_rawCounts.txt.gz', header=TRUE, check.names = FALSE)
+
+samples
+
+sfiles = getGEOSuppFiles('GSE102770')
+fnames = rownames(sfiles)
+# there is only one supplemental file
+C = read.delim(fnames[2], header=TRUE, check.names = FALSE)
+
+sfiles = getGEOSuppFiles('GSE109720')
+fnames = rownames(sfiles)
+file2 = read.table(fnames[1],header = T, check.names = F, skipNul = T)
+
+sfiles = getGEOSuppFiles('GSE114260')
+fnames = rownames(sfiles)
+# there is only one supplemental file
+C = read.delim(fnames[4], header=TRUE, check.names = FALSE)
+```

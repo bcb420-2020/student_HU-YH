@@ -229,3 +229,9 @@ The enrichment analysis result support conclusion in the original paper. Refer t
 nocite: '@*'
 ...
 
+```{r}
+qlf_output_hits_withgn[,"rank"] <- log(qlf_output_hits_withgn$PValue,base = 10)*sign(qlf_output_hits_withgn$logFC)
+qlf_output_hits_withgn <- qlf_output_hits_withgn[order(qlf_output_hits_withgn$rank),]
+colnames(qlf_output_hits_withgn)[1] <- 'GeneName'
+write.csv(qlf_output_hits_withgn[,c('GeneName','rank')], file = 'rank.csv',row.names = F)
+```

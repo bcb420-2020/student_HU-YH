@@ -1,0 +1,72 @@
+---
+title: "EM pipeline"
+params:
+  gsea_jar: /home/bioc/rstudio/GSEA_4.0.2/gsea-cli.sh
+  working_dir: /home/bioc/rstudio/projects
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r, eval = TRUE}
+if (!requireNamespace("knitr", quietly = TRUE)){
+  BiocManager::install("knitr")
+}
+
+if (!requireNamespace("limma", quietly = TRUE)){
+  BiocManager::install("limma")
+}
+library(limma)
+
+if (!requireNamespace("RCy3", quietly = TRUE)){
+  BiocManager::install("RCy3")
+}
+library(RCy3)
+
+if (!requireNamespace("RCurl", quietly = TRUE)){
+  BiocManager::install("RCurl")
+}
+library(RCurl)
+
+if (!requireNamespace("Biobase", quietly = TRUE)){
+  BiocManager::install("Biobase")
+}
+library(Biobase)
+
+if (!requireNamespace("ggplot2", quietly = TRUE)){
+  install.packages("ggplot2")
+}
+library(ggplot2)
+
+if (!requireNamespace("httr", quietly = TRUE)){
+  install.packages("httr")
+}
+library(httr)
+
+if (!requireNamespace("RJSONIO", quietly = TRUE)){
+  install.packages("RJSONIO")
+}
+library(RJSONIO)
+```
+
+```{r runGSEA,eval = TRUE}
+gmt_file <- 'Human_GOBP_AllPathways_no_GO_iea_April_01_2020_symbol.gmt'
+rnk_file <- 'rank.rnk'
+analysis_name <- "GSEA_result_max200"
+
+#command <- paste("",params$gsea_jar,  "GSEAPreRanked -gmx", gmt_file, "-rnk" ,file.path(working_dir,rnk_file), "-collapse false -nperm 1000 -scoring_scheme weighted -rpt_label ",analysis_name,"  -plot_top_x 20 -rnd_seed 12345  -set_max 200 -set_min 15 -zip_report false -out" ,working_dir, " > gsea_output.txt",sep=" ")
+
+command <- paste(params$gsea_jar, "GSEAPreranked -gmx",
+                 file.path(params$working_dir,gmt_file),
+                 "-collapse No_Collapse -mode Max_probe -norm meandiv -nperm 1000 -rnk",
+                 file.path(params$working_dir,rnk_file),
+                 "-scoring_scheme weighted -rpt_label",
+                 analysis_name,
+                 "-create_svgs false -include_only_symbols true -make_sets true -plot_top_x 20 -rnd_seed timestamp",
+                 "-set_max 200 -set_min 15 -zip_report false -out /home/bioc/rstudio/projects")
+system(command)
+
+gsea_directories <- list.files(path = params$working_dir, pattern = "\\.GseaPreranked")
+gsea_output_dir <- gsea_directories[grepl(analysis_name,gsea_directories)]
+write.csv(gsea_output_dir,'gsea_output.txt',row.names = FALSE, col.names = FALSE)
+```

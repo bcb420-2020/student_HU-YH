@@ -1,0 +1,149 @@
+---
+title: "Cytoscape"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE, message=FALSE, warning=FALSE, echo = FALSE)
+```
+
+```{r, eval = TRUE}
+if (!requireNamespace("BiocManager", quietly = TRUE)){
+    install.packages("BiocManager")
+}
+
+if (!requireNamespace("ComplexHeatmap", quietly = TRUE)){
+  BiocManager::install("ComplexHeatmap")
+}
+library(ComplexHeatmap)
+
+if (!requireNamespace("circlize", quietly = TRUE)){
+  BiocManager::install("circlize")
+}
+library(circlize)
+
+if (!requireNamespace("edgeR", quietly = TRUE)){
+  BiocManager::install("edgeR")
+}
+
+library(edgeR)
+
+if (!requireNamespace("knitr", quietly = TRUE)){
+  BiocManager::install("knitr")
+}
+
+if (!requireNamespace("limma", quietly = TRUE)){
+  BiocManager::install("limma")
+}
+library(limma)
+
+if (!requireNamespace("RCy3", quietly = TRUE)){
+  BiocManager::install("RCy3")
+}
+library(RCy3)
+
+if (!requireNamespace("RCurl", quietly = TRUE)){
+  BiocManager::install("RCurl")
+}
+library(RCurl)
+
+if (!requireNamespace("Biobase", quietly = TRUE)){
+  BiocManager::install("Biobase")
+}
+library(Biobase)
+
+if (!requireNamespace("ggplot2", quietly = TRUE)){
+  install.packages("ggplot2")
+}
+library(ggplot2)
+
+if (!requireNamespace("httr", quietly = TRUE)){
+  install.packages("httr")
+}
+library(httr)
+
+if (!requireNamespace("RJSONIO", quietly = TRUE)){
+  install.packages("RJSONIO")
+}
+library(RJSONIO)
+```
+
+Though I can run GSEA successfully in docker container, for reasons I don't know, when I tried to run docker by code in the docker container. It always returns
+
+"Error in curl::curl_fetch_memory(url, handle = handle) : 
+
+Failed to connect to localhost port 1234: Connection refused"
+
+So I decided to create the html notebook for cytoscape part outside the container, then merge the resulstant html file directly into the final hrml report.
+
+
+```{r checkcytoscape, eval = FALSE}
+# Basic settings
+port.number = 1234
+base.url = paste("http://localhost:", toString(port.number), "/v1", sep="")
+
+#print(base.url)
+
+version.url = paste(base.url, "version", sep="/")
+cytoscape.open = TRUE
+
+tryCatch(expr = { GET(version.url)}, 
+         error = function(e) { return (cytoscape.open = FALSE)}, finally =function(r){ return(cytoscape.open = TRUE)})
+
+if(!cytoscape.open){
+  #try and launch cytoscape
+ print("Cytoscape is not open.  Please launch cytoscape.")
+} else{
+  cytoscape.version =  GET(version.url)
+  cy.version = fromJSON(rawToChar(cytoscape.version$content))
+  print(cy.version)
+  
+}
+
+```
+
+## Original EM before Manual Layout
+
+```{r EMoriginal,eval = FALSE}
+pvalue_gsea_threshold <- 0.005
+qvalue_gsea_threshold <- 0.005
+
+similarity_threshold <- "0.5"
+similarity_metric = "OVERLAP"
+
+cur_model_name <- "enrichment map"
+
+#gsea_results_path <- file.path(gsea_result,"edb")
+#gsea_results_filename <- file.path(gsea_results_path,"results.edb")
+
+gmt_gsea_file <- file.path(dest_gmt_file)
+#gsea_ranks_file <- file.path(gsea_results_path,list.files(gsea_results_path,pattern=".rnk"))
+
+current_network_name <- paste(cur_model_name,pvalue_gsea_threshold,qvalue_gsea_threshold,sep="_")
+
+em_command = paste('enrichmentmap build analysisType="gsea"',
+                   'gmtFile=',gmt_gsea_file,
+                   'pvalue=',pvalue_gsea_threshold, 
+                   'qvalue=',qvalue_gsea_threshold,
+                   'similaritycutoff=',similarity_threshold,
+                   'coefficients=',similarity_metric,'ranksDataset1=E:/OneDrive/Document/UofT/LastYear/Winter/BCB420/submission/my_analysis.GseaPreranked.1590521512636/edb/rank.rnk', 
+                   'enrichmentsDataset1=E:/OneDrive/Document/UofT/LastYear/Winter/BCB420/submission/my_analysis.GseaPreranked.1590521512636/edb/results.edb',
+                   sep=" ")
+response <- commandsGET(em_command)
+```
+
+```{r}
+fitContent()
+
+output_network_file <- file.path(getwd(),"OriginalEM.png")
+
+if(file.exists(output_network_file)){
+  #cytoscape hangs waiting for user response if file already exists.  Remove it first
+  response <- file.remove(output_network_file)
+} 
+
+response <- exportImage(output_network_file, type = "png")
+
+```

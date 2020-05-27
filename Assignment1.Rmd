@@ -142,3 +142,9 @@ show.tagwise.vars=FALSE, NBline=FALSE,
 show.ave.raw.vars = FALSE,show.binned.common.disp.vars = FALSE)
 ```
 significant improvement after normalization by TMM
+
+```{r}
+plotMDS(d, labels=rownames(samples),
+  col = c("darkgreen","blue")[factor(samples$cell_type)])
+
+```
